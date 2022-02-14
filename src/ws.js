@@ -1,6 +1,10 @@
 const { WebSocketServer } = require('ws');
 const jwt = require('./jwt');
 
+function send(ws, type, payload) {
+  ws.send(JSON.stringify({ type, payload }));
+}
+
 module.exports.init = (server) => {
   console.log('Instance WebSocketServer');
   const wss = new WebSocketServer({ server });
@@ -13,12 +17,23 @@ module.exports.init = (server) => {
         if (type === 'auth') {
           jwt
             .verify(payload)
-            .then(({ username }) => {
-              onlineUsers.set(username, ws);
-              console.log(`${username} ws auth with token`);
-              ws.on('close', () => onlineUsers.delete(username));
+            .then(({ user }) => {
+              onlineUsers.set(user, ws);
+              console.log(`${user} ws auth with token`);
+              send(ws, 'auth', {
+                authenticated: true,
+                users: Array.from(onlineUsers.keys()).filter((_user) => _user !== user),
+              });
+              ws.on('close', () => {
+                console.log(`${user} disconnect`);  
+                onlineUsers.delete(user);
+                onlineUsers.forEach((wsUser) => send(wsUser, 'user_disconnect', { user }));
+              });
             })
-            .catch(() => {});
+            .catch(() => {
+              send(ws, 'auth', { authenticated: false });
+              ws.close();
+            });
         }
       } catch {}
     });

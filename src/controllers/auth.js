@@ -12,7 +12,7 @@ router.post('/', (req, res) => {
 
   const username = `${req.body.username}#${getRandomInt(1000, 10000)}`;
   jwt
-    .sign({ username })
+    .sign({ user: username })
     .then((token) => res.json({ username, token }))
     .catch((err) => {
       console.error(err);
