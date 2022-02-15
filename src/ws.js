@@ -6,9 +6,12 @@ function send(ws, type, payload) {
 }
 
 module.exports.init = (server) => {
-  console.log('Instance WebSocketServer');
   const wss = new WebSocketServer({ server });
   const onlineUsers = new Map();
+
+  function sendAll(type, payload) {
+    onlineUsers.forEach((ws) => send(ws, type, payload));
+  }
 
   wss.on('connection', (ws) => {
     ws.on('message', (data) => {
@@ -18,16 +21,16 @@ module.exports.init = (server) => {
           jwt
             .verify(payload)
             .then(({ user }) => {
+              sendAll('user_connected', { user });
               onlineUsers.set(user, ws);
-              console.log(`${user} ws auth with token`);
               send(ws, 'auth', {
-                authenticated: true,
                 users: Array.from(onlineUsers.keys()).filter((_user) => _user !== user),
               });
+              console.log(`${user} ws auth with token`);
               ws.on('close', () => {
-                console.log(`${user} disconnect`);
                 onlineUsers.delete(user);
-                onlineUsers.forEach((wsUser) => send(wsUser, 'user_disconnect', { user }));
+                sendAll('user_disconnected', { user });
+                console.log(`${user} disconnected`);
               });
             })
             .catch(() => {
