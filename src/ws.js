@@ -35,7 +35,7 @@ module.exports.init = (server) => {
               ws.close();
             });
         } else if (type === 'ping') {
-          ws.send('pong'); //Avoid heroku timeout
+          send(ws, 'ping'); //Avoid heroku timeout
         }
       } catch {}
     });
