@@ -25,7 +25,7 @@ module.exports.init = (server) => {
                 users: Array.from(onlineUsers.keys()).filter((_user) => _user !== user),
               });
               ws.on('close', () => {
-                console.log(`${user} disconnect`);  
+                console.log(`${user} disconnect`);
                 onlineUsers.delete(user);
                 onlineUsers.forEach((wsUser) => send(wsUser, 'user_disconnect', { user }));
               });
@@ -34,6 +34,8 @@ module.exports.init = (server) => {
               send(ws, 'auth', { authenticated: false });
               ws.close();
             });
+        } else if (type === 'ping') {
+          ws.send('pong'); //Avoid heroku timeout
         }
       } catch {}
     });
