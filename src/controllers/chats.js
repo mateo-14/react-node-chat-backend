@@ -17,10 +17,6 @@ function authMiddleware(req, res, next) {
     .catch(() => res.sendStatus(401));
 }
 
-router.get('/users', authMiddleware, (req, res) => {
-  res.json(Array.from(onlineUsers.keys()).filter((user) => user !== req.user));
-});
-
 router.post('/:to/messages', authMiddleware, (req, res) => {
   const { to } = req.params;
   if (req.user === to) return res.sendStatus(400);
